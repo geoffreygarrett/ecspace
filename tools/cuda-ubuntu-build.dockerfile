@@ -16,8 +16,6 @@ LABEL Description="CUDA Ubuntu Build Environment"
 ENV HOME /root
 SHELL ["/bin/bash", "-c"]
 
-# choose eigen install directory
-ENV EIGEN_INSTALL_DIR /usr/local
 
 # DEPENDENCIES
 RUN apt-get update && apt-get -y --no-install-recommends install \
@@ -38,12 +36,15 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
     && mkdir "build"  \
     && cd "build"  \
     && cmake -DCMAKE_INSTALL_PREFIX=/root/eigen ..  \
+    && make install \
+    && wget https://github.com/skypjack/entt/archive/refs/tags/v${ENTT_VERSION}.tar.gz \
+    && tar -xvf v${ENTT_VERSION}.tar.gz  \
+    && cd entt-${ENTT_VERSION}  \
+    && mkdir "build"  \
+    && cd "build"  \
+    && cmake -DCMAKE_INSTALL_PREFIX=/root/entt ..  \
     && make install
-#    libeigen3-dev
-#    && wget https://github.com/skypjack/entt/archive/refs/tags/v$ENTT_VERSION.tar.gz \
-#    && tar -xvf v$ENTT_VERSION.tar.gz  \
-#    && wget https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz \
-#    && tar -xvf eigen-${EIGEN_VERSION}.tar.gz
+
 
 # Eigen
 #RUN wget https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz \
