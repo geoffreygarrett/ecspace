@@ -47,22 +47,11 @@ services:
       args:
         - CUDA_VERSION=11.8.0
         - UBUNTU_VERSION=22.04
+        - ENTT_VERSION=3.11.1
+        - EIGEN_VERSION=3.4.0
 
     restart: unless-stopped
-    command:
-      - /bin/bash
-      - -c
-      - |
-        apt-get update && apt-get -y --no-install-recommends install \
-            build-essential \
-            cmake \
-            gdb \
-            wget \
-            g++-11  \
-            pciutils \
-            tar \
-        && wget https://github.com/skypjack/entt/archive/refs/tags/v${ENTT_VERSION}.tar.gz \
-        && tar -xvf v${ENTT_VERSION}.tar.gz && while true; do echo Ready to build!; sleep 10; done
+    command: /bin/sh -c "while true; do echo Ready to run!; sleep 10; done"
 
 
 #  runtime-cpu-ubuntu:

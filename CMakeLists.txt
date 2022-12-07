@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.23)
+#cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.22)
 
 project(ECSpace VERSION 0.1.0 LANGUAGES CXX)
 
@@ -6,9 +7,9 @@ option(ECSPACE_BUILD_TESTS "Build tests" ON)
 option(ECSPACE_BUILD_EXAMPLES "Build examples" ON)
 option(ECSPACE_CUDA "Build with CUDA support" ON)
 option(ECSPACE_VERBOSE_MAKEFILE "Verbose makefile" OFF)
-option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" ON)
+option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" OFF)
 
-add_definitions(-DECSPACE_MATPLOTLIB=1)
+
 
 # temporary sticking this here, should be optional, but for now it's required
 set(CMAKE_CXX_STANDARD 17)
@@ -59,6 +60,8 @@ if (ECSPACE_CUDA)
 endif()
 
 if (ECSPACE_MATPLOTLIB)
+    add_definitions(-DECSPACE_MATPLOTLIB=1)
+
     set(CMAKE_PREFIX_PATH "/home/ggarrett/miniconda3/envs/tudat-entt")
     # get python
     find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
@@ -108,13 +111,23 @@ set_target_properties(ecspace PROPERTIES
         )
 
 # ADD tbb
-find_package(TBB REQUIRED)
-include_directories(${TBB_INCLUDE_DIRS})
-target_link_libraries(ecspace TBB::tbb)
+#find_package(TBB REQUIRED)
+#include_directories(${TBB_INCLUDE_DIRS})
+#target_link_libraries(ecspace TBB::tbb)
 
 # important setting for accessing the eigen library
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-find_package(Eigen3 REQUIRED)
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+
+#set(Eigen3_DIR "${CMAKE_CURRENT_LIST_DIR}/vendor/eigen")
+set(Eigen3_DIR "/root/eigen-3.4.0/cmake")
+message(STATUS ${Eigen3_DIR})
+#find_package(Eigen3 REQUIRED)
+set(Eigen3_DIR "/root/eigen-3.4.0/")
+
+message(STATUS ${EIGEN3_INCLUDE_DIR})
+
+#find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # find and link boost ijn
