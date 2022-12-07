@@ -111,24 +111,27 @@ set_target_properties(ecspace PROPERTIES
         )
 
 # ADD tbb
-#find_package(TBB REQUIRED)
-#include_directories(${TBB_INCLUDE_DIRS})
-#target_link_libraries(ecspace TBB::tbb)
+find_package(TBB REQUIRED)
+include_directories(${TBB_INCLUDE_DIRS})
+target_link_libraries(ecspace TBB::tbb)
 
 # important setting for accessing the eigen library
 #list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 
 #set(Eigen3_DIR "${CMAKE_CURRENT_LIST_DIR}/vendor/eigen")
-set(Eigen3_DIR "/root/eigen-3.4.0/cmake")
-message(STATUS ${Eigen3_DIR})
-#find_package(Eigen3 REQUIRED)
-set(Eigen3_DIR "/root/eigen-3.4.0/")
+#set(Eigen3_DIR "/root/eigen/share/eigen3/cmake")
+#message(STATUS ${Eigen3_DIR})
+find_package(Eigen3 REQUIRED)
+#set(Eigen3_DIR "/root/eigen-3.4.0/")
 
 message(STATUS ${EIGEN3_INCLUDE_DIR})
 
 #find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
+
+#include_directories("/usr/include")
+#find_package(entt REQUIRED)
 
 # find and link boost ijn
 #find_package(Boost REQUIRED)
@@ -140,8 +143,11 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 #include_directories(${OpenCV_INCLUDE_DIRS})
 #target_link_libraries(ecspace ${OpenCV_LIBS})
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/entt)
+include_directories(${CMAKE_SOURCE_DIR}/vendor/entt/src)
+
 target_include_directories(ecspace PUBLIC ${Boost_INCLUDE_DIRS})
-target_include_directories(ecspace INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor/entt/src)
+target_include_directories(ecspace INTERFACE "/usr/include")
 target_include_directories(ecspace INTERFACE Eigen3::Eigen)
 target_include_directories(ecspace INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor/matplotlib-cpp)
 #target_include_directories(ecspace INTERFACE /home/ggarrett/CLionProjects/ecspace/vendor/cv-plot/CvPlot/inc)
@@ -160,5 +166,5 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 add_executable(ecspace_earth_asteroids examples/earth_asteroids.cpp)
 target_link_libraries(ecspace_earth_asteroids ecspace)
 
-add_executable(tudat_entt_test_1 .graveyard/test_1.cpp)
-target_link_libraries(tudat_entt_test_1 ecspace)
+#add_executable(tudat_entt_test_1 .graveyard/test_1.cpp)
+#target_link_libraries(tudat_entt_test_1 ecspace)

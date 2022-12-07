@@ -14,6 +14,7 @@ ENV EIGEN_VERSION=${EIGEN_VERSION}
 LABEL Description="CUDA Ubuntu Build Environment"
 
 ENV HOME /root
+ENV USR /usr
 SHELL ["/bin/bash", "-c"]
 
 
@@ -29,40 +30,31 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
     libssl-dev \
     libffi-dev \
     python3-dev \
-    libtbb-dev \
+    libtbb-dev
+
+# EIGEN
+RUN cd $HOME \
     && wget https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz \
     && tar -xvf eigen-${EIGEN_VERSION}.tar.gz \
     && cd eigen-${EIGEN_VERSION}  \
-    && mkdir "build"  \
+    && mkdir -p "build"  \
     && cd "build"  \
-    && cmake -DCMAKE_INSTALL_PREFIX=/root/eigen ..  \
-    && make install \
-    && wget https://github.com/skypjack/entt/archive/refs/tags/v${ENTT_VERSION}.tar.gz \
-    && tar -xvf v${ENTT_VERSION}.tar.gz  \
-    && cd entt-${ENTT_VERSION}  \
-    && mkdir "build"  \
-    && cd "build"  \
-    && cmake -DCMAKE_INSTALL_PREFIX=/root/entt ..  \
+    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
     && make install
 
-
-# Eigen
-#RUN wget https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz \
-#    && tar -xvf eigen-${EIGEN_VERSION}.tar.gz \
-#    && cd eigen-${EIGEN_VERSION}  \
-#    && mkdir "build"  \
+# ENTT
+RUN cd $USR \
+#RUN #cd $HOME \
+    && wget https://github.com/skypjack/entt/archive/refs/tags/v${ENTT_VERSION}.tar.gz \
+    && tar -xvf v${ENTT_VERSION}.tar.gz  \
+#    rename to entt
+    && mv entt-${ENTT_VERSION} entt
+#    && cd entt-${ENTT_VERSION}  \
+#    && mkdir -p "build"  \
 #    && cd "build"  \
-#    && cmake ..  \
+#    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
 #    && make install
 
-#RUN #while true; do echo Ready to build!; sleep 10; done
 
-#SET ENTT_INCLUDE_DIR
-#ENV ENTT_INCLUDE_DIR /root/entt/src
-
-#ARG EIGEN_VERSION
-#ENV EIGEN_VERSION=${EIGEN_VERSION}
-#ENV EIGEN3_INCLUDE_DIR /root/eigen-${EIGEN_VERSION}
-#ENV Eigen3_DIR /root/eigen-${EIGEN_VERSION}/cmake
 
 
