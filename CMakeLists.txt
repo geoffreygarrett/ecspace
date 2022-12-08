@@ -5,9 +5,9 @@ project(ECSpace VERSION 0.1.0 LANGUAGES CXX)
 
 option(ECSPACE_BUILD_TESTS "Build tests" ON)
 option(ECSPACE_BUILD_EXAMPLES "Build examples" ON)
-option(ECSPACE_CUDA "Build with CUDA support" ON)
+option(ECSPACE_CUDA "Build with CUDA support" OFF)
 option(ECSPACE_VERBOSE_MAKEFILE "Verbose makefile" OFF)
-option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" OFF)
+option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" ON)
 
 
 
@@ -61,8 +61,9 @@ endif()
 
 if (ECSPACE_MATPLOTLIB)
     add_definitions(-DECSPACE_MATPLOTLIB=1)
+    include_directories(${CMAKE_SOURCE_DIR}/vendor/matplotlib-cpp)
 
-    set(CMAKE_PREFIX_PATH "/home/ggarrett/miniconda3/envs/tudat-entt")
+#    set(CMAKE_PREFIX_PATH "/home/ggarrett/miniconda3/envs/tudat-bundle")
     # get python
     find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
     # pythonlibs
@@ -70,6 +71,7 @@ if (ECSPACE_MATPLOTLIB)
     # include
     include_directories(${Python3_INCLUDE_DIRS})
     include_directories(${PYTHON_INCLUDE_DIRS})
+#    include_directories(${CMAKE_PREFIX_PATH})
 
 
     # get numpy
@@ -100,6 +102,7 @@ add_library(ecspace
         src/ecspace/core/termination.h
 #        .graveyard/systems/animation.h
         src/ecspace/core/conditions.h
+#        src/ecspace/core/accelerations.cu
         )
 
 # set target properties
@@ -146,6 +149,12 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/entt)
 include_directories(${CMAKE_SOURCE_DIR}/vendor/entt/src)
 
+if (ESPACE_MATPLOTLIB)
+    # add matplotlib
+#    find_package(Matplotlib REQUIRED)
+#    target_link_libraries(ecspace ${Matplotlib_LIBRARIES})
+endif()
+
 target_include_directories(ecspace PUBLIC ${Boost_INCLUDE_DIRS})
 target_include_directories(ecspace INTERFACE "/usr/include")
 target_include_directories(ecspace INTERFACE Eigen3::Eigen)
@@ -164,7 +173,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") # compile for multiple cores
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 add_executable(ecspace_earth_asteroids examples/earth_asteroids.cpp)
+add_executable(ecspace_n_body examples/n_body.cpp)
 target_link_libraries(ecspace_earth_asteroids ecspace)
+target_link_libraries(ecspace_n_body ecspace)
 
 #add_executable(tudat_entt_test_1 .graveyard/test_1.cpp)
 #target_link_libraries(tudat_entt_test_1 ecspace)

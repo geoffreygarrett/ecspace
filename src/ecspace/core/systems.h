@@ -8,6 +8,7 @@
 #include "accelerations.h"
 #include "components.h"
 #include "entt/entt.hpp"
+#include "accelerations.cuh"
 #include <execution>
 
 #include "consts.h"
@@ -98,9 +99,7 @@ public:
         state_ = state;
     }
 
-#if ECSPACE_CUDA
 
-#else
     Eigen::VectorXd get_translational_state_derivative(entt::registry &registry, Eigen::VectorXd state, double t) {
         // get all entities with a name, position, velocity and acceleration
         //        auto view = registry.view<name, position, velocity, acceleration, simulated>();
@@ -117,6 +116,11 @@ public:
         // start timer
 //        auto start1 = std::chrono::high_resolution_clock::now();
 
+//#if ECSPACE_CUDA
+//
+//        calcuate_derivatives<<<1, count_>>>(registry, state_derivative.data(), t);
+//
+//#else
         // iterate over all simulated bodies
         std::for_each(std::execution::par_unseq, view.begin(), view.end(), [&registry, t](auto entity) {
             // iterate over all dynamic_influences on this body and sum the accelerations
@@ -138,6 +142,7 @@ public:
 
 
         });
+//#endif
         // time
 //        auto end1 = std::chrono::high_resolution_clock::now();
 //        auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
@@ -175,7 +180,6 @@ public:
 
         return state_derivative_;
     }
-#endif//ECSPACE_CUDA
 
 private:
     int count_ = 0;

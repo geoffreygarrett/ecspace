@@ -69,43 +69,27 @@ int main() {
     auto t_end = static_cast<double>(consts::JY) * 5;
     auto dt = static_cast<double>(consts::JD)/24 * 6;
 
+    const int N_BODIES = 200;
+
     // physicsSystem
     auto print_system = PrintSystem();
     //    auto integration_system = PhysicsSystem(0.1);
 
     // create global reference frame
-    auto global_frame = registry.create();
-    registry.emplace<name>(global_frame, "global_frame");
-    registry.emplace<position>(global_frame, 0., 0., 0.);
-    registry.emplace<velocity>(global_frame, 0., 0., 0.);
-    registry.emplace<acceleration>(global_frame, 0., 0., 0.);
+//    auto global_frame = registry.create();
+//    registry.emplace<name>(global_frame, "global_frame");
+//    registry.emplace<position>(global_frame, 0., 0., 0.);
+//    registry.emplace<velocity>(global_frame, 0., 0., 0.);
+//    registry.emplace<acceleration>(global_frame, 0., 0., 0.);
 
     // create sun
-    auto sun = registry.create();
-    registry.emplace<name>(sun, "Sun");
-    registry.emplace<position>(sun, 0, 0, 0);
-    registry.emplace<velocity>(sun, 0, 0, 0);
-    registry.emplace<acceleration>(sun, 0, 0, 0);
-    registry.emplace<gravitational_parameter>(sun, 1.32712440042e20);
-    registry.emplace<parent>(sun, global_frame);
-
-    // create a celestial body
-    const auto earth = registry.create();
-    registry.emplace<name>(earth, "Earth");
-    registry.emplace<position>(earth, 149598023000., 0., 0.);
-    registry.emplace<velocity>(earth, 0., 29780., 0.);
-    registry.emplace<gravitational_parameter>(earth, 3.986004418e14);
-    registry.emplace<parent>(earth, sun);
-    registry.emplace<acceleration>(earth, 0, 0, 0);
-
-    // create another celestial body
-    const auto moon = registry.create();
-    registry.emplace<name>(moon, "Moon");
-    registry.emplace<position>(moon, 149598023000. + 384748000, 0., 0.);
-    registry.emplace<velocity>(moon, 0., 29780. + 1022., 0.);
-    registry.emplace<gravitational_parameter>(moon, 4.902801e12);
-    registry.emplace<parent>(moon, earth);
-    registry.emplace<acceleration>(moon, 0, 0, 0);
+//    auto sun = registry.create();
+//    registry.emplace<name>(sun, "Sun");
+//    registry.emplace<position>(sun, 0, 0, 0);
+//    registry.emplace<velocity>(sun, 0, 0, 0);
+//    registry.emplace<acceleration>(sun, 0, 0, 0);
+//    registry.emplace<gravitational_parameter>(sun, 1.32712440042e20);
+//    registry.emplace<parent>(sun, global_frame);
 
     // SIMULATORS?
     const auto simulation_1 = registry.create();
@@ -117,68 +101,42 @@ int main() {
     registry.emplace<name>(termination_1, "time_termination");
     registry.emplace<termination>(termination_1, create_termination_condition(simulation_1, t_end));
 
-    const auto termination_2 = registry.create();
-    registry.emplace<name>(termination_2, "exact_moon_exit_soi_termination");
-    registry.emplace<termination>(termination_2, create_exact_soi_exit_condition(moon, earth));
-
-
-//    registry.emplace<condition>(termination_2, registry.get<termination>(termination_2).condition);
-    //
-    // EQUATIONS OF MOTION
-    //
-    // NOTE: Must add a "on_delete/remove" hook to remove acceleration when the causal entity is deleted.
-    //       This is supported by EnTT, but I haven't implemented it yet.
-    //
-    // NOTES: Must add a check to ensure that the same acceleration function is not added twice for the same pair.
-    //
-
-    struct point_mass_gravity {
-        entt::entity attractor;
-    };
-
-    /// \ACCELERATIONS
-    const auto acceleration_1 = registry.create();
-    registry.emplace<name>(acceleration_1, "sun_earth_gravity");
-    registry.emplace<dynamic_influence>(acceleration_1, point_mass_acceleration(sun, earth));
-
-    const auto acceleration_2 = registry.create();
-    registry.emplace<name>(acceleration_2, "earth_moon_gravity");
-    registry.emplace<dynamic_influence>(acceleration_2, point_mass_acceleration(earth, moon));
-
-    const auto acceleration_3 = registry.create();
-    registry.emplace<name>(acceleration_3, "sun_moon_gravity");
-    registry.emplace<dynamic_influence>(acceleration_3, point_mass_acceleration(sun, moon));
+//    const int RAND_MAX = 1000000;
 
     // add 100 random near earth asteroids
-    int n_asteroids = 20;
-    for (int i = 0; i < n_asteroids + 1; i++) {
-        double ratio = static_cast<double>(i) / static_cast<double>(n_asteroids);
-        const auto asteroid = registry.create();
-        registry.emplace<name>(asteroid, "ASTEROID" + std::to_string(i));
-        registry.emplace<position>(asteroid, 149598023000. - 384748000. - 384748000 / 10 * (10 * (0.1 + ratio * (1 - 0.5))), 0., 0.);
-        registry.emplace<velocity>(asteroid, 0., 29780. + 1022, 0.);
-        registry.emplace<acceleration>(asteroid, 0, 0, 0);
-        registry.emplace<gravitational_parameter>(asteroid, 4.902801e12);
-        registry.emplace<parent>(asteroid, earth);
-        registry.emplace<simulated>(asteroid, simulation_1);// flags as simulated
+    for (int i = 0; i < N_BODIES + 1; i++) {
+        const auto body = registry.create();
+        registry.emplace<name>(body, "BODY" + std::to_string(i));
+        // generate random position
+        auto x = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        auto y = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        auto z = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        registry.emplace<position>(body, x, y, z);
+        // generate random velocity
+        auto vx = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        auto vy = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        auto vz = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        registry.emplace<velocity>(body, vx, vy, vz);
+        // generate gravitational_parameter
+        registry.emplace<gravitational_parameter>(body, 100);
+//        registry.emplace<simulated>(body, simulation_1);// flags as simulated
+    }
 
-        /// \TERMINATION
-        const auto termination_asteroid = registry.create();
-        registry.emplace<name>(termination_asteroid, "exact_ASTEROID" + std::to_string(i) + "_exit_soi_termination");
-        registry.emplace<termination>(termination_asteroid, create_exact_soi_exit_condition(asteroid, earth, 3.0));
-
-        /// \ACCELERATIONS
-        const auto earth_asteroid_acceleration = registry.create();
-        registry.emplace<name>(earth_asteroid_acceleration, "Acceleration_Earth_on_ASTEROID" + std::to_string(i));
-        registry.emplace<dynamic_influence>(earth_asteroid_acceleration, point_mass_acceleration(earth, asteroid));
-
-        const auto moon_asteroid_acceleration = registry.create();
-        registry.emplace<name>(moon_asteroid_acceleration, "Acceleration_Moon_on_ASTEROID" + std::to_string(i));
-        registry.emplace<dynamic_influence>(moon_asteroid_acceleration, point_mass_acceleration(moon, asteroid));
-
-        const auto sun_asteroid_acceleration = registry.create();
-        registry.emplace<name>(sun_asteroid_acceleration, "Acceleration_Sun_on_ASTEROID" + std::to_string(i));
-        registry.emplace<dynamic_influence>(sun_asteroid_acceleration, point_mass_acceleration(sun, asteroid));
+    // add accelerations
+    auto view_i = registry.view<name, position, velocity, gravitational_parameter, simulated>();
+    auto view_j = registry.view<name, position, velocity, gravitational_parameter, simulated>();
+    // iterate over all bodies
+    for (auto body_i : view_i) {
+        // iterate over all bodies again
+        for (auto body_j : view_j) {
+            // if the bodies are not the same
+            if (body_i != body_j) {
+                // add acceleration
+                const auto acceleration = registry.create();
+                registry.emplace<name>(acceleration, "gravity_" + registry.get<name>(body_i) + "_" + registry.get<name>(body_j));
+                registry.emplace<dynamic_influence>(acceleration, point_mass_acceleration(body_j, body_i));
+            }
+        }
     }
     // TODO: Add FLOPs counter, and FEVALs counter.
 
@@ -220,6 +178,7 @@ int main() {
 
         // rk4
         Eigen::VectorXd y = dynamics_system.get_translational_state(registry);
+        std::cout << "y = " << y.transpose() << std::endl;
         Eigen::VectorXd k1 = dynamics_system.get_translational_state_derivative(registry,  y, e);
         Eigen::VectorXd k2 = dynamics_system.get_translational_state_derivative(registry,  y + k1 * dt / 2, e + dt / 2);
         Eigen::VectorXd k3 = dynamics_system.get_translational_state_derivative(registry,  y + k2 * dt / 2, e + dt / 2);

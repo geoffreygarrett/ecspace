@@ -17,6 +17,9 @@ void randomizeBodies(float *data, int n) {
     }
 }
 
+
+//__global__ void calculate_derivatives(
+
 __global__ void point_mass_force(float4 *p, float4 *v, float dt, int n) {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < n) {

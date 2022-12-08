@@ -27,6 +27,7 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
     g++-11  \
     pciutils \
     tar \
+    git \
     libssl-dev \
     libffi-dev \
     python3-dev \
@@ -54,6 +55,17 @@ RUN cd $USR \
 #    && cd "build"  \
 #    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
 #    && make install
+
+
+# MATPLOTLIBCPP
+RUN cd $HOME \
+    && git clone https://github.com/lava/matplotlib-cpp.git \
+    && cd matplotlib-cpp \
+    && mkdir -p "build"  \
+    && cd "build"  \
+    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
+    && make install
+
 
 
 
