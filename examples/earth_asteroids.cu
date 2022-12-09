@@ -18,13 +18,7 @@
 
 #include "helper.h"
 
-
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include "../src/ecspace/core/test.cuh"
-
-
-
+//#include <cuda_runtime.h>
 //#include "vector_types.h"
 
 /// \important
@@ -167,19 +161,14 @@ int main() {
 
     // ...
 //    float *d_buf;
-//    float *d_buf;
-//
-//    cudaMalloc(&d_buf, 100 * sizeof(float));
-//    cudaMalloc(&d_buf, sizeof(position) * (n_asteroids + 2));
+    float *d_buf;
 
-//    position *d_buf;
+    cudaMalloc(&d_buf, 100 * sizeof(float));
 //    cudaMalloc(&d_buf, sizeof(position) * (n_asteroids + 2));
-    device_info();
 
     while (!terminate) {
-//        device_info();
 
-        wrapper();
+
         // get current time
         auto &e = registry.get<epoch>(simulation_1);
         std::cout << "t = " << prettify_time(registry.get<epoch>(simulation_1)) << std::endl;

@@ -1,11 +1,11 @@
 #cmake_minimum_required(VERSION 3.23)
 cmake_minimum_required(VERSION 3.22)
 
-project(ECSpace VERSION 0.1.0 LANGUAGES CXX)
+project(ECSpace VERSION 0.1.0 LANGUAGES CUDA CXX)
 
 option(ECSPACE_BUILD_TESTS "Build tests" ON)
 option(ECSPACE_BUILD_EXAMPLES "Build examples" ON)
-option(ECSPACE_CUDA "Build with CUDA support" OFF)
+option(ECSPACE_CUDA "Build with CUDA support" ON)
 option(ECSPACE_VERBOSE_MAKEFILE "Verbose makefile" OFF)
 option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" OFF)
 
@@ -18,6 +18,91 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (ECSPACE_VERBOSE_MAKEFILE)
     set(CMAKE_VERBOSE_MAKEFILE ON)
 endif()
+
+
+if (ECSPACE_MATPLOTLIB)
+    add_definitions(-DECSPACE_MATPLOTLIB=1)
+
+
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    # pythonlibs
+    find_package(PythonLibs REQUIRED)
+    # include
+    include_directories(${Python3_INCLUDE_DIRS})
+    include_directories(${PYTHON_INCLUDE_DIRS})
+
+    # get numpy
+    execute_process(COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
+            OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    execute_process(COMMAND pip install matplotlib)
+
+    find_package(matplotlib_cpp REQUIRED)
+    include_directories(${matplotlib_cpp_INCLUDE_DIRS})
+
+    # include
+    include_directories(${NUMPY_INCLUDE_DIR})
+endif()
+
+
+
+# add directory
+#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/entt)
+#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/eigen)
+
+
+add_library(ecspace
+        src/ecspace/core/accelerations.h
+        src/ecspace/core/components.h
+        src/ecspace/core/systems.h
+        src/ecspace/core/consts.h
+        src/ecspace/core/termination.h
+#        .graveyard/systems/animation.h
+        src/ecspace/core/conditions.h
+#        src/ecspace/core/test.cu
+        )
+
+# set target properties
+set_target_properties(ecspace PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+        LINKER_LANGUAGE CXX
+        )
+
+# ADD tbb
+#find_package(TBB REQUIRED)
+#include_directories(${TBB_INCLUDE_DIRS})
+#target_link_libraries(ecspace TBB::tbb)
+
+# important setting for accessing the eigen library
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+set(Eigen3_DIR "${CMAKE_CURRENT_LIST_DIR}/tools/prefix/share/eigen3/cmake")
+message(STATUS ${Eigen3_DIR})
+find_package(Eigen3 REQUIRED)
+message(STATUS ${EIGEN3_INCLUDE_DIR})
+
+#find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+#include_directories("/usr/include")
+#find_package(entt REQUIRED)
+
+set(ENTT_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/tools/prefix/entt/src")
+
+if (ESPACE_MATPLOTLIB)
+    # add matplotlib
+#    find_package(Matplotlib REQUIRED)
+#    target_link_libraries(ecspace ${Matplotlib_LIBRARIES})
+endif()
+
+target_include_directories(ecspace PUBLIC ${ENTT_INCLUDE_DIR})
+target_include_directories(ecspace PUBLIC Eigen3::Eigen)
+target_link_libraries(ecspace ${PYTHON_LIBRARIES})
+
+
 
 if (ECSPACE_CUDA)
     # temporary sticking this here, should be optional, but for now it's required
@@ -57,111 +142,44 @@ if (ECSPACE_CUDA)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
         set(DEVICE_DEBUGGING -G0) # CUDA_DEVICE_DEBUGGING
     endif()
-endif()
 
-if (ECSPACE_MATPLOTLIB)
-    add_definitions(-DECSPACE_MATPLOTLIB=1)
+    add_library(ecspace_cuda src/ecspace/core/test.cu)
+
+    set_target_properties(ecspace_cuda PROPERTIES
+            CUDA_SEPARABLE_COMPILATION ON)
+
+    target_include_directories(ecspace_cuda PUBLIC ${ENTT_INCLUDE_DIR})
+    target_include_directories(ecspace_cuda PUBLIC Eigen3::Eigen)
+    # set language
+    #    set_target_properties(ecspace-cuda LANGUAGES CUDA)
+    #            CUDA_STANDARD 17
+    #            CUDA_STANDARD_REQUIRED ON
+    #            CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES}
+    #            CUDA_RESOLVE_DEVICE_SYMBOLS ON
+    #            CUDA_RUNTIME_LIBRARY Shared
+    #            CUDA_SEPARABLE_COMPILATION ON
+    #            CUDA_VERBOSE_BUILD ON
+    #            CUDA_DEBUGGING ${DEVICE_DEBUGGING}
+    #            CUDA_DEBUG_OUTPUT ON
+    #            CUDA_DEBUG_POSTFIX d
+    #            CUDA_EXTENSIONS ON
+    #            CUDA_PTX_COMPILATION ON
+    #            CUDA_NVCC_FLAGS_DEBUG ${DEVICE_DEBUGGING}
+    #            CUDA_NVCC_FLAGS_RELWITHDEBINFO ${DEVICE_DEBUGGING}
+    #            CUDA_NVCC_FLAGS_RELEASE ${DEVICE_DEBUGGING}
+    #            CUDA_NVCC_FLAGS_MINSIZEREL ${DEVICE_DEBUGGING}
+    #            )
 
 
-    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-    # pythonlibs
-    find_package(PythonLibs REQUIRED)
-    # include
-    include_directories(${Python3_INCLUDE_DIRS})
-    include_directories(${PYTHON_INCLUDE_DIRS})
-
-    # get numpy
-    execute_process(COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
-            OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    execute_process(COMMAND pip install matplotlib)
-
-    find_package(matplotlib_cpp REQUIRED)
-    include_directories(${matplotlib_cpp_INCLUDE_DIRS})
-
-    # include
-    include_directories(${NUMPY_INCLUDE_DIR})
 endif()
 
 if (ECSPACE_BUILD_TESTS)
-#
-#     use google tests
-#     https://github.com/google/googletest.git
+    #
+    #     use google tests
+    #     https://github.com/google/googletest.git
     enable_testing()
     add_subdirectory(tests)
 endif ()
-
-# add directory
-#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/entt)
-#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/eigen)
-add_library(ecspace
-        src/ecspace/core/accelerations.h
-        src/ecspace/core/components.h
-        src/ecspace/core/systems.h
-        src/ecspace/core/consts.h
-        src/ecspace/core/termination.h
-#        .graveyard/systems/animation.h
-        src/ecspace/core/conditions.h
-#        src/ecspace/core/accelerations.cu
-        )
-
-# set target properties
-set_target_properties(ecspace PROPERTIES
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
-        LINKER_LANGUAGE CXX
-        )
-
-# ADD tbb
-find_package(TBB REQUIRED)
-include_directories(${TBB_INCLUDE_DIRS})
-target_link_libraries(ecspace TBB::tbb)
-
-# important setting for accessing the eigen library
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
-
-#set(Eigen3_DIR "${CMAKE_CURRENT_LIST_DIR}/vendor/eigen")
-#set(Eigen3_DIR "/root/eigen/share/eigen3/cmake")
-#message(STATUS ${Eigen3_DIR})
-find_package(Eigen3 REQUIRED)
-#set(Eigen3_DIR "/root/eigen-3.4.0/")
-
-message(STATUS ${EIGEN3_INCLUDE_DIR})
-
-#find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
-
-#include_directories("/usr/include")
-#find_package(entt REQUIRED)
-
-# find and link boost ijn
-#find_package(Boost REQUIRED)
-#include_directories(${Boost_INCLUDE_DIRS})
-#target_link_libraries(ecspace ${Boost_LIBRARIES})
-
-# add opencv
-#find_package(OpenCV REQUIRED)
-#include_directories(${OpenCV_INCLUDE_DIRS})
-#target_link_libraries(ecspace ${OpenCV_LIBS})
-
-add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/entt)
-include_directories(${CMAKE_SOURCE_DIR}/vendor/entt/src)
-
-if (ESPACE_MATPLOTLIB)
-    # add matplotlib
-#    find_package(Matplotlib REQUIRED)
-#    target_link_libraries(ecspace ${Matplotlib_LIBRARIES})
-endif()
-
-target_include_directories(ecspace PUBLIC ${Boost_INCLUDE_DIRS})
-target_include_directories(ecspace INTERFACE "/usr/include")
-target_include_directories(ecspace INTERFACE Eigen3::Eigen)
-target_include_directories(ecspace INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor/matplotlib-cpp)
-#target_include_directories(ecspace INTERFACE /home/ggarrett/CLionProjects/ecspace/vendor/cv-plot/CvPlot/inc)
-target_link_libraries(ecspace ${PYTHON_LIBRARIES})
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -175,8 +193,24 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 add_executable(ecspace_earth_asteroids examples/earth_asteroids.cpp)
 add_executable(ecspace_n_body examples/n_body.cpp)
+
 target_link_libraries(ecspace_earth_asteroids ecspace)
 target_link_libraries(ecspace_n_body ecspace)
+
+
+
+if (ECSPACE_CUDA)
+    find_package(CUDA 9.0 REQUIRED)
+    target_link_libraries(ecspace_cuda PUBLIC ${CUDA_LIBRARIES})
+    target_include_directories(ecspace_cuda PUBLIC ${CUDA_INCLUDE_DIRS})
+
+#    add_executable(cuda_ecspace_earth_asteroids examples/earth_asteroids.cu)
+#    target_link_libraries(cuda_ecspace_earth_asteroids ecspace_cuda)
+#    target_link_libraries(cuda_ecspace_earth_asteroids ecspace)
+
+    target_link_libraries(ecspace_earth_asteroids ecspace_cuda)
+    target_link_libraries(ecspace_n_body ecspace_cuda)
+endif()
 
 #add_executable(tudat_entt_test_1 .graveyard/test_1.cpp)
 #target_link_libraries(tudat_entt_test_1 ecspace)

@@ -16,41 +16,7 @@
 #include <Eigen/Dense>
 #include <utility>
 
-
-
-std::string prettify_time(double time){
-    // uses all time units up to most significant
-    // time unit that is not 0
-    std::string time_string;
-    double time_left = time;
-    int years = time_left / 365.25 / 24 / 60 / 60;
-    time_left -= years * 365.25 * 24 * 60 * 60;
-    int days = time_left / 24 / 60 / 60;
-    time_left -= days * 24 * 60 * 60;
-    int hours = time_left / 60 / 60;
-    time_left -= hours * 60 * 60;
-    int minutes = time_left / 60;
-    time_left -= minutes * 60;
-    double seconds = time_left;
-    if (years > 0) {
-        time_string += std::to_string(years) + " years ";
-    }
-    if (days > 0) {
-        time_string += std::to_string(days) + " days ";
-    }
-    if (hours > 0) {
-        time_string += std::to_string(hours) + " hours ";
-    }
-    if (minutes > 0) {
-        time_string += std::to_string(minutes) + " minutes ";
-    }
-    if (seconds > 0) {
-        time_string += std::to_string(seconds) + " seconds ";
-    }
-    return time_string;
-
-
-}
+#include "helper.h"
 
 
 /// \important
@@ -67,7 +33,7 @@ int main() {
     // add termination condition for the at time 100 s
     auto t0 = 0.0;
     auto t_end = static_cast<double>(consts::JY) * 5;
-    auto dt = static_cast<double>(consts::JD)/24 ;
+    auto dt = static_cast<double>(consts::JD) / 24;
 
     const int N_BODIES = 3000;
 
@@ -94,7 +60,7 @@ int main() {
     // add 100 random near earth asteroids
     for (int i = 0; i < N_BODIES; i++) {
         const auto body = registry.create();
-        registry.emplace<name>(body, "BODY" + std::to_string(i+1));
+        registry.emplace<name>(body, "BODY" + std::to_string(i + 1));
         // generate random position
         auto x = consts::AU * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
         auto y = consts::AU * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
@@ -108,23 +74,22 @@ int main() {
         // add 0 acceleration
         registry.emplace<acceleration>(body, 0, 0, 0);
         // generate gravitational_parameter
-        registry.emplace<gravitational_parameter>(body, consts::M_sun * consts::G/1000);
+        registry.emplace<gravitational_parameter>(body, consts::M_sun * consts::G / 1000);
         registry.emplace<simulated>(body, simulation_1);// flags as simulated
-
     }
 
     // add accelerations
     auto view_i = registry.view<name, position, velocity, gravitational_parameter>();
     auto view_j = registry.view<name, position, velocity, gravitational_parameter>();
     // iterate over all bodies
-    for (auto body_i : view_i) {
+    for (auto body_i: view_i) {
         // iterate over all bodies again
-        for (auto body_j : view_j) {
+        for (auto body_j: view_j) {
             // if the bodies are not the same
             if (body_i != body_j) {
                 // add acceleration
                 const auto acceleration = registry.create();
-                std::cout<< "Adding acceleration between " << view_i.get<name>(body_i) << " and " << view_j.get<name>(body_j) << std::endl;
+                std::cout << "Adding acceleration between " << view_i.get<name>(body_i) << " and " << view_j.get<name>(body_j) << std::endl;
                 registry.emplace<name>(acceleration, "gravity_" + registry.get<name>(body_i) + "_" + registry.get<name>(body_j));
                 registry.emplace<dynamic_influence>(acceleration, point_mass_acceleration(body_j, body_i));
             }
@@ -134,13 +99,13 @@ int main() {
 
     bool terminate = false;
 
-#if ECSPACE_MATPLOTLIB
-    /// animation
-    auto animation_system = MatplotlibSystem(registry);// initialize the animation system
-//    animation_system.set_reference_frame(earth);
-//    animation_system.set_scale(consts::AU);
-    animation_system.initialize(registry);// initialize the animation system
-#endif
+//#if ECSPACE_MATPLOTLIB
+//    /// animation
+//    auto animation_system = MatplotlibSystem(registry);// initialize the animation system
+//                                                       //    animation_system.set_reference_frame(earth);
+//                                                       //    animation_system.set_scale(consts::AU);
+//    animation_system.initialize(registry);             // initialize the animation system
+//#endif
 
     /// \note checks the dynamic system dependency components and marks
     /// all bodies with position and velocity being influenced by a
@@ -150,7 +115,7 @@ int main() {
     // time the simulation
     auto start = std::chrono::high_resolution_clock::now();
 
-//    auto csv = CSVWriterSystem(registry);
+    //    auto csv = CSVWriterSystem(registry);
 
     while (!terminate) {
 
@@ -158,10 +123,10 @@ int main() {
         // get current time
         auto &e = registry.get<epoch>(simulation_1);
 
-//        std::cout << "e = " << registry.get<epoch>(simulation_1) / 60 / 60 / 24 << " days" << std::endl;
-//        std::tuple<double, std::string> t = get_significant_time_unit(registry.get<epoch>(simulation_1));
-        std::cout<< "t = " << prettify_time(e) << std::endl;
-//        get_significant_time_unit(registry.get<epoch>(simulation_1));
+        //        std::cout << "e = " << registry.get<epoch>(simulation_1) / 60 / 60 / 24 << " days" << std::endl;
+        //        std::tuple<double, std::string> t = get_significant_time_unit(registry.get<epoch>(simulation_1));
+        std::cout << "t = " << prettify_time(e) << std::endl;
+        //        get_significant_time_unit(registry.get<epoch>(simulation_1));
 
         // euler
         // Eigen::VectorXd y = dynamics_system.get_translational_state(registry);
@@ -170,16 +135,16 @@ int main() {
 
         // rk4
         Eigen::VectorXd y = dynamics_system.get_translational_state(registry);
-//        std::cout << "y = " << y.transpose() << std::endl;
-        Eigen::VectorXd k1 = dynamics_system.get_translational_state_derivative(registry,  y, e);
-//        std::cout << "k1 = " << k1.transpose() << std::endl;
+        //        std::cout << "y = " << y.transpose() << std::endl;
+        Eigen::VectorXd k1 = dynamics_system.get_translational_state_derivative(registry, y, e);
+        //        std::cout << "k1 = " << k1.transpose() << std::endl;
 
-        Eigen::VectorXd k2 = dynamics_system.get_translational_state_derivative(registry,  y + k1 * dt / 2, e + dt / 2);
-        Eigen::VectorXd k3 = dynamics_system.get_translational_state_derivative(registry,  y + k2 * dt / 2, e + dt / 2);
-        Eigen::VectorXd k4 = dynamics_system.get_translational_state_derivative(registry,  y + k3 * dt, e + dt);
+        Eigen::VectorXd k2 = dynamics_system.get_translational_state_derivative(registry, y + k1 * dt / 2, e + dt / 2);
+        Eigen::VectorXd k3 = dynamics_system.get_translational_state_derivative(registry, y + k2 * dt / 2, e + dt / 2);
+        Eigen::VectorXd k4 = dynamics_system.get_translational_state_derivative(registry, y + k3 * dt, e + dt);
         dynamics_system.set_translational_state(registry, y + (k1 + 2 * k2 + 2 * k3 + k4) * dt / 6);
 
-//        csv.update(registry);
+        //        csv.update(registry);
 
         // rk8
         // Eigen::VectorXd y = dynamics_system.get_translational_state(registry);
@@ -196,10 +161,10 @@ int main() {
         // set new time
         registry.replace<epoch>(simulation_1, e + dt);
 
-#if ECSPACE_MATPLOTLIB
-        // animate
-        animation_system.update(registry);
-#endif
+//#if ECSPACE_MATPLOTLIB
+//        // animate
+//        animation_system.update(registry);
+//#endif
 
         // check if termination conditions are met
         auto view = registry.view<termination>();
@@ -207,19 +172,13 @@ int main() {
             auto &term = view.get<termination>(entity);
             if (term(registry)) {
                 std::cout << "Termination condition met: " << registry.get<name>(entity) << std::endl;
-                terminate = true;
-                break;
+                registry.clear();
+                // time the simulation
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double> elapsed = end - start;
+                std::cout << "Elapsed time: " << elapsed.count() << " s " << std::endl;
+                return 0;
             }
         }
-
-        if (terminate) {
-            registry.clear();
-            break;
-        };
     }
-    // time the simulation
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Elapsed time: " << elapsed.count() << " s " << std::endl;
-
 }

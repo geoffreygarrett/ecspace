@@ -30,12 +30,12 @@ typedef double independent;
 
 
 
-struct butcher_tableau {
-    Eigen::MatrixXd a;
-    Eigen::VectorXd b;
-    Eigen::VectorXd c;
-    int s;
-};
+//struct butcher_tableau {
+//    Eigen::MatrixXd a;
+//    Eigen::VectorXd b;
+//    Eigen::VectorXd c;
+//    int s;
+//};
 
 //struct rk4_butcher_tableau {
 //    static butcher_tableau get() {
@@ -53,18 +53,18 @@ struct butcher_tableau {
 //    }
 //};
 
-butcher_tableau get_rk4_butcher_tableau() {
-    Eigen::MatrixXd a(4, 4);
-    a << 0, 0, 0, 0,
-            0.5, 0, 0, 0,
-            0, 0.5, 0, 0,
-            0, 0, 1, 0;
-    Eigen::VectorXd b(4);
-    b << 1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0;
-    Eigen::VectorXd c(4);
-    c << 0, 0.5, 0.5, 1;
-    return butcher_tableau{a, b, c};
-}
+//butcher_tableau get_rk4_butcher_tableau() {
+//    Eigen::MatrixXd a(4, 4);
+//    a << 0, 0, 0, 0,
+//            0.5, 0, 0, 0,
+//            0, 0.5, 0, 0,
+//            0, 0, 1, 0;
+//    Eigen::VectorXd b(4);
+//    b << 1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0;
+//    Eigen::VectorXd c(4);
+//    c << 0, 0.5, 0.5, 1;
+//    return butcher_tableau{a, b, c};
+//}
 
 
 struct dynamic_influence {
