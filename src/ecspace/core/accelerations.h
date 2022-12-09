@@ -8,8 +8,11 @@
 #include "components.h"
 #include "entt/entt.hpp"
 
+#define SOFTENING 1e-9
+
 dynamic_influence point_mass_acceleration(entt::entity entity_exerting, entt::entity entity_influenced) {
 //#if ECSPACE_CUDA
+
 
 //#else
     return dynamic_influence{entity_exerting, entity_influenced,
@@ -30,9 +33,9 @@ dynamic_influence point_mass_acceleration(entt::entity entity_exerting, entt::en
 
                                  // calculate the acceleration
                                  return Eigen::Vector3d{
-                                         -mu * (r2.x - r1.x) / std::pow(distance, 3),
-                                         -mu * (r2.y - r1.y) / std::pow(distance, 3),
-                                         -mu * (r2.z - r1.z) / std::pow(distance, 3)};
+                                         -mu * (r2.x - r1.x) / std::pow(distance + SOFTENING, 3),
+                                         -mu * (r2.y - r1.y) / std::pow(distance + SOFTENING, 3),
+                                         -mu * (r2.z - r1.z) / std::pow(distance + SOFTENING, 3)};
                              }};
 //#endif
 }

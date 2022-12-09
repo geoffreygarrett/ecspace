@@ -14,8 +14,13 @@ ENV EIGEN_VERSION=${EIGEN_VERSION}
 LABEL Description="CUDA Ubuntu Build Environment"
 
 ENV HOME /root
+ENV WORKING /work
 ENV USR /usr
+ENV PREFIX /tmp_prefix
 SHELL ["/bin/bash", "-c"]
+
+RUN mkdir -p ${WORKING} && \
+    mkdir -p ${PREFIX}
 
 
 # DEPENDENCIES
@@ -34,36 +39,33 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
     libtbb-dev
 
 # EIGEN
-RUN cd $HOME \
+RUN cd $WORKING \
     && wget https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz \
     && tar -xvf eigen-${EIGEN_VERSION}.tar.gz \
     && cd eigen-${EIGEN_VERSION}  \
     && mkdir -p "build"  \
     && cd "build"  \
-    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
+    && cmake -DCMAKE_INSTALL_PREFIX=$PREFIX ..  \
     && make install
 
 # ENTT
-RUN cd $USR \
-#RUN #cd $HOME \
+RUN cd $WORKING \
     && wget https://github.com/skypjack/entt/archive/refs/tags/v${ENTT_VERSION}.tar.gz \
     && tar -xvf v${ENTT_VERSION}.tar.gz  \
-#    rename to entt
-    && mv entt-${ENTT_VERSION} entt
+    && mv entt-${ENTT_VERSION} $PREFIX/entt
 #    && cd entt-${ENTT_VERSION}  \
 #    && mkdir -p "build"  \
 #    && cd "build"  \
 #    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
 #    && make install
 
-
 # MATPLOTLIBCPP
-RUN cd $HOME \
+RUN cd $WORKING \
     && git clone https://github.com/lava/matplotlib-cpp.git \
     && cd matplotlib-cpp \
     && mkdir -p "build"  \
     && cd "build"  \
-    && cmake -DCMAKE_INSTALL_PREFIX=$USR ..  \
+    && cmake -DCMAKE_INSTALL_PREFIX=$PREFIX ..  \
     && make install
 
 

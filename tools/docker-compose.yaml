@@ -41,6 +41,8 @@ services:
 
   build-cuda118-ubuntu2204:
     container_name: build-cuda118-ubuntu2204
+    volumes:
+      - ${PWD}/prefix:/prefix
     build:
       context: .
       dockerfile: cuda-ubuntu-build.dockerfile
@@ -49,9 +51,17 @@ services:
         - UBUNTU_VERSION=22.04
         - ENTT_VERSION=3.11.1
         - EIGEN_VERSION=3.4.0
+#       mount prefix
 
     restart: unless-stopped
-    command: /bin/sh -c "while true; do echo Ready to run!; sleep 10; done"
+    command:
+      - /bin/sh
+      - -c
+      - "cp -R /tmp_prefix/* /prefix"
+#      - "while true; do echo Ready to run!; sleep 10; done"
+
+#    mount /usr/local/cuda-11.8.0
+#    volumes:
 
 
 #  runtime-cpu-ubuntu:

@@ -31,12 +31,19 @@ public:
         auto count_ = 0;
         for (auto entity: view) {
             auto &dynamic_influence_ = registry.get<dynamic_influence>(entity);
+//            std::cout << "Checking dynamic_influence " << registry.get<name>(entity) << std::endl;
             assert(registry.try_get<position>(dynamic_influence_.on_entity) != nullptr);
             assert(registry.try_get<velocity>(dynamic_influence_.on_entity) != nullptr);
             // TODO: Later we will need to consider rotational dynamics.
             // assign state_index and simulated
-            registry.emplace_or_replace<index>(dynamic_influence_.on_entity, count_);
-            registry.emplace_or_replace<simulated>(dynamic_influence_.on_entity);
+            auto index_ptr = registry.try_get<index>(dynamic_influence_.on_entity);
+            if (index_ptr == nullptr) {
+                registry.emplace<index>(dynamic_influence_.on_entity, count_);
+                registry.emplace<simulated>(dynamic_influence_.on_entity);
+                registry.emplace<acceleration>(dynamic_influence_.on_entity, 0, 0, 0);
+                count_++;
+            }
+
             // TODO: Could form dependency graph for entities later... perhaps working towards co-simulation/ or better multi-threading!
             // add influences
             if (registry.try_get<influences>(dynamic_influence_.on_entity) == nullptr) {
@@ -44,7 +51,8 @@ public:
             } else {
                 registry.get<influences>(dynamic_influence_.on_entity).entities.push_back(entity);
             }
-            count_++;
+//            count_++;
+//            std::cout << count_ << std::endl;
         }
         // size state vector
         state_ = Eigen::VectorXd::Zero(6 * count_);
@@ -191,18 +199,21 @@ private:
 class PrintSystem {
 public:
     void update(entt::registry &registry) {
-        registry.view<name, position, velocity, acceleration>().each([](auto entity, auto &name, auto &position, auto &velocity, auto &acceleration) {
-            std::cout << name
-                      << " is at ("             << position.x       << ", " << position.y       << ", " << position.z
-                      << ") with velocity ("    << velocity.dx      << ", " << velocity.dy      << ", " << velocity.dz
-                      << ") and acceleration (" << acceleration.ddx << ", " << acceleration.ddy << ", " << acceleration.ddz
-                      << ")" << std::endl;
-        });
+        registry.view<name, position, velocity, acceleration>().each(
+                [](auto entity, auto &name, auto &position, auto &velocity, auto &acceleration) {
+                    std::cout << name
+                              << " is at (" << position.x << ", " << position.y << ", " << position.z
+                              << ") with velocity (" << velocity.dx << ", " << velocity.dy << ", " << velocity.dz
+                              << ") and acceleration (" << acceleration.ddx << ", " << acceleration.ddy << ", "
+                              << acceleration.ddz
+                              << ")" << std::endl;
+                });
     }
 };
 
 
 #if ECSPACE_MATPLOTLIB
+
 #include "matplotlibcpp.h"
 
 namespace plt = matplotlibcpp;
@@ -237,28 +248,30 @@ public:
 
         // if reference_frame has gravitational parameter and a parent with a gravitational parameter, then
         // plot the sphere of influence
-        auto mu_ptr = registry.try_get<gravitational_parameter>(reference_frame);
-        if (mu_ptr != nullptr) {
-            auto mu = *mu_ptr;
-            auto parent_ptr = registry.try_get<parent>(reference_frame);
-            if (parent_ptr != nullptr) {
-                auto parent = *parent_ptr;
-                auto parent_mu_ptr = registry.try_get<gravitational_parameter>(parent);
-                auto parent_position_ptr = registry.try_get<position>(parent);
-                if (parent_mu_ptr != nullptr && parent_position_ptr != nullptr) {
-                    auto parent_mu = *parent_mu_ptr;
-                    auto parent_position = *parent_position_ptr;
-                    auto pos = registry.get<position>(reference_frame);
-                    auto distance = std::sqrt(
-                            std::pow(pos.x - parent_position.x, 2) +
-                            std::pow(pos.y - parent_position.y, 2) +
-                            std::pow(pos.z - parent_position.z, 2));
-                    auto radius = r_soi(distance, mu, parent_mu);
-                    for (double theta = 0; theta < 2 * M_PI; theta += M_PI / 100) {
-                        soi_x.push_back(radius * std::cos(theta) / scale);
-                        soi_y.push_back(radius * std::sin(theta) / scale);
+        if (reference_frame != entt::null) {
+            auto mu_ptr = registry.try_get<gravitational_parameter>(reference_frame);
+            if (mu_ptr != nullptr) {
+                auto mu = *mu_ptr;
+                auto parent_ptr = registry.try_get<parent>(reference_frame);
+                if (parent_ptr != nullptr) {
+                    auto parent = *parent_ptr;
+                    auto parent_mu_ptr = registry.try_get<gravitational_parameter>(parent);
+                    auto parent_position_ptr = registry.try_get<position>(parent);
+                    if (parent_mu_ptr != nullptr && parent_position_ptr != nullptr) {
+                        auto parent_mu = *parent_mu_ptr;
+                        auto parent_position = *parent_position_ptr;
+                        auto pos = registry.get<position>(reference_frame);
+                        auto distance = std::sqrt(
+                                std::pow(pos.x - parent_position.x, 2) +
+                                std::pow(pos.y - parent_position.y, 2) +
+                                std::pow(pos.z - parent_position.z, 2));
+                        auto radius = r_soi(distance, mu, parent_mu);
+                        for (double theta = 0; theta < 2 * M_PI; theta += M_PI / 100) {
+                            soi_x.push_back(radius * std::cos(theta) / scale);
+                            soi_y.push_back(radius * std::sin(theta) / scale);
+                        }
+                        plt::plot(soi_x, soi_y, "k--");
                     }
-                    plt::plot(soi_x, soi_y, "k--");
                 }
             }
         }
@@ -286,15 +299,16 @@ public:
 
     void update(entt::registry &registry) {
 
-        int num = 50;
-        registry.view<const name, const position, const simulated>().each([&](auto entity, auto &name, auto &position, auto &simulated) {
-            // store initial position
-            struct position transformed_position = transform(registry, position);
-            x[entity].push_back(transformed_position.x);
-            y[entity].push_back(transformed_position.y);
-        });
+        int num = 300;
+        registry.view<const name, const position, const simulated>().each(
+                [&](auto entity, auto &name, auto &position, auto &simulated) {
+                    // store initial position
+                    struct position transformed_position = transform(registry, position);
+                    x[entity].push_back(transformed_position.x);
+                    y[entity].push_back(transformed_position.y);
+                });
 
-        if (i % 1 == 0) {
+        if (i % 10 == 0) {
             plt::clf();
             plt::xlabel("x [AU]");
             plt::ylabel("y [AU]");
@@ -314,9 +328,12 @@ public:
 //                plt::named_plot(n, x[entity], y[entity]);
             }
 //            plot soi
-            plt::xkcd();
+//            plt::xkcd();
 
-            plt::plot(soi_x, soi_y, "k--");
+            if (soi_x.size() > 0) {
+                plt::plot(soi_x, soi_y, "k--");
+            }
+//            plt::plot(soi_x, soi_y, "k--");
 //            plt::legend();
             plt::pause(0.000001);
         }
@@ -369,6 +386,7 @@ private:
     int i = 0;
     int j = 0;
 };
+
 #endif // ECSPACE_MATPLOTLIB
 
 

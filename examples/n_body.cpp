@@ -67,29 +67,19 @@ int main() {
     // add termination condition for the at time 100 s
     auto t0 = 0.0;
     auto t_end = static_cast<double>(consts::JY) * 5;
-    auto dt = static_cast<double>(consts::JD)/24 * 6;
+    auto dt = static_cast<double>(consts::JD)/24 ;
 
-    const int N_BODIES = 200;
+    const int N_BODIES = 3000;
 
     // physicsSystem
     auto print_system = PrintSystem();
-    //    auto integration_system = PhysicsSystem(0.1);
 
     // create global reference frame
-//    auto global_frame = registry.create();
-//    registry.emplace<name>(global_frame, "global_frame");
-//    registry.emplace<position>(global_frame, 0., 0., 0.);
-//    registry.emplace<velocity>(global_frame, 0., 0., 0.);
-//    registry.emplace<acceleration>(global_frame, 0., 0., 0.);
-
-    // create sun
-//    auto sun = registry.create();
-//    registry.emplace<name>(sun, "Sun");
-//    registry.emplace<position>(sun, 0, 0, 0);
-//    registry.emplace<velocity>(sun, 0, 0, 0);
-//    registry.emplace<acceleration>(sun, 0, 0, 0);
-//    registry.emplace<gravitational_parameter>(sun, 1.32712440042e20);
-//    registry.emplace<parent>(sun, global_frame);
+    auto global_frame = registry.create();
+    registry.emplace<name>(global_frame, "global_frame");
+    registry.emplace<position>(global_frame, 0., 0., 0.);
+    registry.emplace<velocity>(global_frame, 0., 0., 0.);
+    registry.emplace<acceleration>(global_frame, 0., 0., 0.);
 
     // SIMULATORS?
     const auto simulation_1 = registry.create();
@@ -101,30 +91,31 @@ int main() {
     registry.emplace<name>(termination_1, "time_termination");
     registry.emplace<termination>(termination_1, create_termination_condition(simulation_1, t_end));
 
-//    const int RAND_MAX = 1000000;
-
     // add 100 random near earth asteroids
-    for (int i = 0; i < N_BODIES + 1; i++) {
+    for (int i = 0; i < N_BODIES; i++) {
         const auto body = registry.create();
-        registry.emplace<name>(body, "BODY" + std::to_string(i));
+        registry.emplace<name>(body, "BODY" + std::to_string(i+1));
         // generate random position
-        auto x = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
-        auto y = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
-        auto z = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        auto x = consts::AU * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
+        auto y = consts::AU * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
+        auto z = consts::AU * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
         registry.emplace<position>(body, x, y, z);
         // generate random velocity
-        auto vx = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
-        auto vy = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
-        auto vz = 1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5;
+        auto vx = 27000 * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
+        auto vy = 27000 * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
+        auto vz = 27000 * (1.0 * (rand() / static_cast<double>(RAND_MAX)) - 0.5);
         registry.emplace<velocity>(body, vx, vy, vz);
+        // add 0 acceleration
+        registry.emplace<acceleration>(body, 0, 0, 0);
         // generate gravitational_parameter
-        registry.emplace<gravitational_parameter>(body, 100);
-//        registry.emplace<simulated>(body, simulation_1);// flags as simulated
+        registry.emplace<gravitational_parameter>(body, consts::M_sun * consts::G/1000);
+        registry.emplace<simulated>(body, simulation_1);// flags as simulated
+
     }
 
     // add accelerations
-    auto view_i = registry.view<name, position, velocity, gravitational_parameter, simulated>();
-    auto view_j = registry.view<name, position, velocity, gravitational_parameter, simulated>();
+    auto view_i = registry.view<name, position, velocity, gravitational_parameter>();
+    auto view_j = registry.view<name, position, velocity, gravitational_parameter>();
     // iterate over all bodies
     for (auto body_i : view_i) {
         // iterate over all bodies again
@@ -133,6 +124,7 @@ int main() {
             if (body_i != body_j) {
                 // add acceleration
                 const auto acceleration = registry.create();
+                std::cout<< "Adding acceleration between " << view_i.get<name>(body_i) << " and " << view_j.get<name>(body_j) << std::endl;
                 registry.emplace<name>(acceleration, "gravity_" + registry.get<name>(body_i) + "_" + registry.get<name>(body_j));
                 registry.emplace<dynamic_influence>(acceleration, point_mass_acceleration(body_j, body_i));
             }
@@ -145,8 +137,8 @@ int main() {
 #if ECSPACE_MATPLOTLIB
     /// animation
     auto animation_system = MatplotlibSystem(registry);// initialize the animation system
-    animation_system.set_reference_frame(earth);
-    animation_system.set_scale(consts::AU);
+//    animation_system.set_reference_frame(earth);
+//    animation_system.set_scale(consts::AU);
     animation_system.initialize(registry);// initialize the animation system
 #endif
 
@@ -168,7 +160,7 @@ int main() {
 
 //        std::cout << "e = " << registry.get<epoch>(simulation_1) / 60 / 60 / 24 << " days" << std::endl;
 //        std::tuple<double, std::string> t = get_significant_time_unit(registry.get<epoch>(simulation_1));
-        std::cout<< "t = " << prettify_time(registry.get<epoch>(simulation_1)) << std::endl;
+        std::cout<< "t = " << prettify_time(e) << std::endl;
 //        get_significant_time_unit(registry.get<epoch>(simulation_1));
 
         // euler
@@ -178,8 +170,10 @@ int main() {
 
         // rk4
         Eigen::VectorXd y = dynamics_system.get_translational_state(registry);
-        std::cout << "y = " << y.transpose() << std::endl;
+//        std::cout << "y = " << y.transpose() << std::endl;
         Eigen::VectorXd k1 = dynamics_system.get_translational_state_derivative(registry,  y, e);
+//        std::cout << "k1 = " << k1.transpose() << std::endl;
+
         Eigen::VectorXd k2 = dynamics_system.get_translational_state_derivative(registry,  y + k1 * dt / 2, e + dt / 2);
         Eigen::VectorXd k3 = dynamics_system.get_translational_state_derivative(registry,  y + k2 * dt / 2, e + dt / 2);
         Eigen::VectorXd k4 = dynamics_system.get_translational_state_derivative(registry,  y + k3 * dt, e + dt);

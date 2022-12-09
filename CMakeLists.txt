@@ -7,7 +7,7 @@ option(ECSPACE_BUILD_TESTS "Build tests" ON)
 option(ECSPACE_BUILD_EXAMPLES "Build examples" ON)
 option(ECSPACE_CUDA "Build with CUDA support" OFF)
 option(ECSPACE_VERBOSE_MAKEFILE "Verbose makefile" OFF)
-option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" ON)
+option(ECSPACE_MATPLOTLIB "Support matplotlib-cpp" OFF)
 
 
 
@@ -61,23 +61,24 @@ endif()
 
 if (ECSPACE_MATPLOTLIB)
     add_definitions(-DECSPACE_MATPLOTLIB=1)
-    include_directories(${CMAKE_SOURCE_DIR}/vendor/matplotlib-cpp)
 
-#    set(CMAKE_PREFIX_PATH "/home/ggarrett/miniconda3/envs/tudat-bundle")
-    # get python
+
     find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
     # pythonlibs
     find_package(PythonLibs REQUIRED)
     # include
     include_directories(${Python3_INCLUDE_DIRS})
     include_directories(${PYTHON_INCLUDE_DIRS})
-#    include_directories(${CMAKE_PREFIX_PATH})
-
 
     # get numpy
     execute_process(COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
             OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
             OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    execute_process(COMMAND pip install matplotlib)
+
+    find_package(matplotlib_cpp REQUIRED)
+    include_directories(${matplotlib_cpp_INCLUDE_DIRS})
 
     # include
     include_directories(${NUMPY_INCLUDE_DIR})
