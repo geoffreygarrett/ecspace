@@ -15,7 +15,9 @@
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true);
 
 void device_info();
+
 void wrapper ();
 
+void calculate_forces();
 
 #endif // HELPER_CUH

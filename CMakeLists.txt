@@ -1,7 +1,7 @@
 #cmake_minimum_required(VERSION 3.23)
 cmake_minimum_required(VERSION 3.22)
 
-project(ECSpace VERSION 0.1.0 LANGUAGES CUDA CXX)
+project(ECSpace VERSION 0.1.0 LANGUAGES CXX)
 
 option(ECSPACE_BUILD_TESTS "Build tests" ON)
 option(ECSPACE_BUILD_EXAMPLES "Build examples" ON)
@@ -61,7 +61,7 @@ add_library(ecspace
 #        .graveyard/systems/animation.h
         src/ecspace/core/conditions.h
 #        src/ecspace/core/test.cu
-        )
+        src/kalman.h)
 
 # set target properties
 set_target_properties(ecspace PROPERTIES
@@ -72,9 +72,9 @@ set_target_properties(ecspace PROPERTIES
         )
 
 # ADD tbb
-#find_package(TBB REQUIRED)
-#include_directories(${TBB_INCLUDE_DIRS})
-#target_link_libraries(ecspace TBB::tbb)
+find_package(TBB REQUIRED)
+include_directories(${TBB_INCLUDE_DIRS})
+target_link_libraries(ecspace TBB::tbb)
 
 # important setting for accessing the eigen library
 #list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")

@@ -39,15 +39,16 @@ services:
 #      && tar -xvf v${ENTT_VERSION}.tar.gz \
 #      && "while true; do echo Ready to build!; sleep 10; done"
 
-  build-cuda118-ubuntu2204:
-    container_name: build-cuda118-ubuntu2204
+  build-cuda120-ubuntu2204:
+    container_name: build-cuda120-ubuntu2204
     volumes:
       - ${PWD}/prefix:/prefix
     build:
       context: .
       dockerfile: cuda-ubuntu-build.dockerfile
       args:
-        - CUDA_VERSION=11.8.0
+#        - CUDA_VERSION=11.8.0
+        - CUDA_VERSION=12.0.0
         - UBUNTU_VERSION=22.04
         - ENTT_VERSION=3.11.1
         - EIGEN_VERSION=3.4.0

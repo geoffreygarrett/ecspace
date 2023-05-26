@@ -32,6 +32,12 @@
 ///    ensuring that, for example, a secondary body such as the Moon, is
 ///    NOT missing the acceleration of the Sun, IF the Earth either is
 ///    accelerating towards the Sun or is using ephemeris.
+
+//__host__ __device__
+//void point_mass_acceleration(double GM, float4 r1, float3 r2){
+//    printf("%s, %d %d\n", s, i, k);
+//}
+
 int main() {
     ///
     /// ENVIRONMENT SETUP
@@ -82,8 +88,8 @@ int main() {
     registry.emplace<name>(simulation_1, "simulation_1");
     registry.emplace<epoch>(simulation_1, t0);
 
-    entt::sigh<bool()> terminate_signal;
-    entt::sink terminate_sink{terminate_signal};
+//    entt::sigh<bool()> terminate_signal;
+//    entt::sink terminate_sink{terminate_signal};
 
     // termination
     const auto termination_1 = registry.create();
@@ -102,7 +108,6 @@ int main() {
     //
     // NOTES: Must add a check to ensure that the same acceleration function is not added twice for the same pair.
     //
-//    float4 *d_pos;
     /// \ACCELERATIONS
     const auto acceleration_1 = registry.create();
     registry.emplace<name>(acceleration_1, "sun_earth_gravity");
@@ -179,7 +184,7 @@ int main() {
     while (!terminate) {
 //        device_info();
 
-        wrapper();
+//        wrapper();
         // get current time
         auto &e = registry.get<epoch>(simulation_1);
         std::cout << "t = " << prettify_time(registry.get<epoch>(simulation_1)) << std::endl;
